@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/auth/remember_session_storage.dart';
 import '../../../theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -15,6 +18,22 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _showPassword = false;
   bool _rememberSession = true;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberPreference();
+  }
+
+  Future<void> _loadRememberPreference() async {
+    final preferences = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _rememberSession = preferences.getBool('dk_remember_session') ?? true;
+    });
+  }
 
   @override
   void dispose() {
@@ -23,18 +42,35 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _continueToNextStep() {
+  Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          content: Text(
-            'La conexión de acceso con Supabase se integra en el siguiente paso.',
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      await RememberSessionStorage.setRememberSession(_rememberSession);
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
       );
+    } on AuthException {
+      if (mounted) {
+        setState(() {
+          _errorMessage =
+              'No se pudo iniciar sesión. Revisa tu correo y contraseña.';
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _errorMessage =
+              'No se pudo conectar. Revisa tu internet e inténtalo otra vez.';
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -77,32 +113,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           'PORTAL DEL EQUIPO',
                           style: TextStyle(
                             color: AppColors.muted,
-                            fontSize: 10,
+                            fontSize: 11,
+                            letterSpacing: 2.3,
                             fontWeight: FontWeight.w600,
-                            letterSpacing: 2.0,
                           ),
                         ),
-                        const SizedBox(height: 11),
-                        const Text(
+                        const SizedBox(height: 12),
+                        Text(
                           'Bienvenido',
-                          style: TextStyle(
-                            color: AppColors.ink,
-                            fontSize: 34,
-                            fontWeight: FontWeight.w700,
-                            height: 1.1,
-                            letterSpacing: -1.4,
-                          ),
+                          style: Theme.of(context).textTheme.headlineMedium,
                         ),
-                        const SizedBox(height: 9),
+                        const SizedBox(height: 8),
                         const Text(
-                          'Ingresa con el correo y la contraseña de tu cuenta.',
-                          style: TextStyle(
-                            color: AppColors.muted,
-                            fontSize: 14,
-                            height: 1.5,
-                          ),
+                          'Ingresa con el correo y contraseña de tu cuenta.',
+                          style: TextStyle(color: AppColors.muted, height: 1.5),
                         ),
-                        const SizedBox(height: 29),
+                        const SizedBox(height: 30),
                         Form(
                           key: _formKey,
                           child: Column(
@@ -114,22 +140,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                 controller: _emailController,
                                 keyboardType: TextInputType.emailAddress,
                                 textInputAction: TextInputAction.next,
-                                autofillHints: const [
-                                  AutofillHints.username,
-                                  AutofillHints.email,
-                                ],
+                                autofillHints: const [AutofillHints.username],
                                 decoration: const InputDecoration(
                                   hintText: 'nombre@dkpartners.com',
                                 ),
                                 validator: (value) {
-                                  final email = value?.trim() ?? '';
-                                  if (email.isEmpty || !email.contains('@')) {
-                                    return 'Escribe un correo válido.';
+                                  if (value == null || !value.contains('@')) {
+                                    return 'Ingresa un correo válido.';
                                   }
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 19),
+                              const SizedBox(height: 18),
                               const _FieldLabel('Contraseña'),
                               const SizedBox(height: 8),
                               TextFormField(
@@ -137,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 obscureText: !_showPassword,
                                 textInputAction: TextInputAction.done,
                                 autofillHints: const [AutofillHints.password],
-                                onFieldSubmitted: (_) => _continueToNextStep(),
+                                onFieldSubmitted: (_) => _signIn(),
                                 decoration: InputDecoration(
                                   hintText: 'Tu contraseña',
                                   suffixIcon: IconButton(
@@ -151,20 +173,21 @@ class _LoginScreenState extends State<LoginScreen> {
                                       _showPassword
                                           ? Icons.visibility_off_outlined
                                           : Icons.visibility_outlined,
+                                      size: 19,
                                     ),
                                   ),
                                 ),
                                 validator: (value) =>
                                     value == null || value.isEmpty
-                                    ? 'Escribe tu contraseña.'
+                                    ? 'Ingresa tu contraseña.'
                                     : null,
                               ),
-                              const SizedBox(height: 9),
+                              const SizedBox(height: 14),
                               InkWell(
-                                borderRadius: BorderRadius.circular(8),
                                 onTap: () => setState(
                                   () => _rememberSession = !_rememberSession,
                                 ),
+                                borderRadius: BorderRadius.circular(8),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 5,
@@ -184,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       const Text(
                                         'Mantener sesión iniciada',
                                         style: TextStyle(
-                                          color: Color(0xFF49534E),
+                                          color: AppColors.ink,
                                           fontSize: 13,
                                         ),
                                       ),
@@ -192,30 +215,40 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 15),
-                              SizedBox(
-                                height: 50,
-                                child: FilledButton.icon(
-                                  onPressed: _continueToNextStep,
-                                  icon: const Icon(
-                                    Icons.arrow_forward_rounded,
-                                    size: 19,
+                              if (_errorMessage != null) ...[
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFF0EE),
+                                    borderRadius: BorderRadius.circular(9),
                                   ),
-                                  label: const Text('Ingresar'),
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: AppColors.navy,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    textStyle: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
+                                  child: Text(
+                                    _errorMessage!,
+                                    style: const TextStyle(
+                                      color: Color(0xFFA3443A),
+                                      fontSize: 13,
                                     ),
                                   ),
                                 ),
+                              ],
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                height: 50,
+                                child: FilledButton(
+                                  onPressed: _isLoading ? null : _signIn,
+                                  child: _isLoading
+                                      ? const SizedBox.square(
+                                          dimension: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text('Ingresar'),
+                                ),
                               ),
-                              const SizedBox(height: 17),
+                              const SizedBox(height: 18),
                               const Text(
                                 '¿Olvidaste tu contraseña? Pídele al administrador que te asigne una temporal.',
                                 textAlign: TextAlign.center,

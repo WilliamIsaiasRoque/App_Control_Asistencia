@@ -39,3 +39,6 @@ coverage/
 # OS files
 .DS_Store
 Thumbs.db
+# Local Supabase configuration
+/supabase.local.json
+/android/.kotlin/
