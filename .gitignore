@@ -1,0 +1,41 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+.pub/
+.pub-cache/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+coverage/
+.flutter-asset-manifest
+.flutter-build/
+
+# Keep pubspec.lock committed for this application.
+
+# Android / Gradle
+.gradle/
+/android/local.properties
+/android/key.properties
+/android/.gradle/
+/android/app/debug
+/android/app/profile
+/android/app/release
+*.jks
+*.keystore
+
+# IDEs
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+**/google-services.json
+**/GoogleService-Info.plist
+
+# OS files
+.DS_Store
+Thumbs.db
