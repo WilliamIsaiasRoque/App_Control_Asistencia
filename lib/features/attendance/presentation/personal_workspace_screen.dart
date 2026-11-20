@@ -33,6 +33,9 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
   DateTime _clock = _peruNow;
   AttendanceRecord? _today;
   List<AttendanceRecord> _records = [];
+  List<TeamMemberAttendance> _team = [];
+  bool _teamLoading = false;
+  String? _teamError;
   Timer? _timer;
   bool _loading = true;
   bool _attendanceLoadFailed = false;
@@ -94,6 +97,36 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
       }
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _loadTeam() async {
+    setState(() {
+      _teamLoading = true;
+      _teamError = null;
+    });
+    try {
+      final team = await _repository.loadActiveTeam(_dateKey(_peruNow));
+      if (!mounted) return;
+      setState(() {
+        _team = team;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _teamError = 'No se pudo cargar el equipo. Revisa tu conexión y vuelve a actualizar.';
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _teamLoading = false);
+    }
+  }
+
+  Future<void> _refreshCurrentTab(bool admin) async {
+    if (admin && _tab == 1) {
+      await _loadTeam();
+    } else {
+      await _load();
     }
   }
 
@@ -240,6 +273,16 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
   Widget build(BuildContext context) {
     final admin = widget.profile.role == 'admin';
     final firstName = widget.profile.fullName.split(' ').first;
+    Widget page;
+    if (admin && _tab == 1) {
+      page = _teamPage();
+    } else if (admin && _tab == 2) {
+      page = _historyPage();
+    } else if (!admin && _tab == 1) {
+      page = _historyPage();
+    } else {
+      page = _attendancePage(firstName, admin);
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -253,7 +296,9 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
         actions: [
           IconButton(
             tooltip: 'Actualizar',
-            onPressed: _loading ? null : () => _load(),
+            onPressed: (_loading || _teamLoading)
+                ? null
+                : () => _refreshCurrentTab(admin),
             icon: const Icon(Icons.refresh),
           ),
           IconButton(
@@ -265,28 +310,50 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
       ),
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () => _load(),
-          child: _tab == 0 ? _attendancePage(firstName, admin) : _historyPage(),
+          onRefresh: () => _refreshCurrentTab(admin),
+          child: page,
         ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
         onDestinationSelected: (value) {
           setState(() => _tab = value);
-          if (value == 1) unawaited(_load());
+          if (admin && value == 1) {
+            unawaited(_loadTeam());
+          } else {
+            unawaited(_load());
+          }
         },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.access_time_outlined),
-            selectedIcon: Icon(Icons.access_time_filled),
-            label: 'Asistencia',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined),
-            selectedIcon: Icon(Icons.calendar_month),
-            label: 'Mi Registro de Horas',
-          ),
-        ],
+        destinations: admin
+            ? const [
+                NavigationDestination(
+                  icon: Icon(Icons.access_time_outlined),
+                  selectedIcon: Icon(Icons.access_time_filled),
+                  label: 'Mi asistencia',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.groups_outlined),
+                  selectedIcon: Icon(Icons.groups),
+                  label: 'Equipo',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.calendar_month_outlined),
+                  selectedIcon: Icon(Icons.calendar_month),
+                  label: 'Mi Registro',
+                ),
+              ]
+            : const [
+                NavigationDestination(
+                  icon: Icon(Icons.access_time_outlined),
+                  selectedIcon: Icon(Icons.access_time_filled),
+                  label: 'Asistencia',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.calendar_month_outlined),
+                  selectedIcon: Icon(Icons.calendar_month),
+                  label: 'Mi Registro de Horas',
+                ),
+              ],
       ),
     );
   }
@@ -451,6 +518,202 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
             child: LinearProgressIndicator(minHeight: 2),
           ),
       ],
+    );
+  }
+
+  Widget _teamPage() {
+    final present = _team
+        .where((member) => member.record?.checkInAt != null)
+        .length;
+    final complete = _team
+        .where((member) => member.record?.checkOutAt != null)
+        .length;
+    final date = _capitalize(DateFormat('EEEE d MMMM', 'es_PE').format(_clock));
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
+      children: [
+        const Text(
+          'ADMINISTRACIÓN',
+          style: TextStyle(
+            color: AppColors.muted,
+            fontSize: 10,
+            letterSpacing: 2,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Asistencia del equipo',
+          style: Theme.of(context).textTheme.headlineSmall
+              ?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 4),
+        Text(date, style: const TextStyle(color: AppColors.muted)),
+        const SizedBox(height: 18),
+        Row(
+          children: [
+            Expanded(
+              child: _SummaryCard(
+                label: 'TRABAJADORES',
+                value: '${_team.length}',
+                subtitle: 'Cuentas activas',
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _SummaryCard(
+                label: 'PRESENTES',
+                value: '$present',
+                subtitle: 'Con entrada',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        _SummaryCard(
+          label: 'JORNADAS COMPLETAS',
+          value: '$complete',
+          subtitle: 'Trabajadores con entrada y salida',
+          wide: true,
+        ),
+        const SizedBox(height: 18),
+        if (_teamError != null) ...[
+          _ErrorCard(message: _teamError!),
+          const SizedBox(height: 12),
+        ],
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'ESTADO DE HOY',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Actualizar equipo',
+                      onPressed: _teamLoading ? null : _loadTeam,
+                      icon: const Icon(Icons.refresh),
+                    ),
+                  ],
+                ),
+                if (_teamLoading) const LinearProgressIndicator(minHeight: 2),
+                if (!_teamLoading && _team.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 28),
+                    child: Text(
+                      'No hay trabajadores activos para mostrar.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppColors.muted),
+                    ),
+                  ),
+                ..._team.map(_teamMemberCard),
+                const SizedBox(height: 12),
+                const Text(
+                  'Tu asistencia como administrador se consulta en “Mi asistencia”.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.muted, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _teamMemberCard(TeamMemberAttendance member) {
+    final record = member.record;
+    final hasEntry = record?.checkInAt != null;
+    final complete = record?.checkOutAt != null;
+    final label = complete
+        ? 'Completa'
+        : hasEntry
+        ? 'En curso'
+        : 'Sin marcar';
+    final color = complete
+        ? const Color(0xFF29976D)
+        : hasEntry
+        ? const Color(0xFFB77718)
+        : AppColors.muted;
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.page,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 17,
+                backgroundColor: AppColors.navy.withValues(alpha: .1),
+                child: Text(
+                  member.profile.fullName.isEmpty
+                      ? '?'
+                      : member.profile.fullName[0].toUpperCase(),
+                  style: const TextStyle(
+                    color: AppColors.navy,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  member.profile.fullName,
+                  style: const TextStyle(
+                    color: AppColors.navyDark,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _HistoryTime(
+                  label: 'ENTRADA',
+                  value: _time(record?.checkInAt),
+                ),
+              ),
+              Expanded(
+                child: _HistoryTime(
+                  label: 'SALIDA',
+                  value: _time(record?.checkOutAt),
+                ),
+              ),
+              Expanded(
+                child: _HistoryTime(
+                  label: 'HORAS',
+                  value: _duration(record?.workedMinutes ?? 0),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
