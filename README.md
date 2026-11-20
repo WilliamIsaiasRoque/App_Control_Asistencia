@@ -4,17 +4,17 @@ App móvil Flutter para Android y iPhone, basada en la interfaz y las reglas del
 
 ## Estado
 
-- Base Flutter para Android e iOS.
-- Pantalla de acceso adaptada del diseño web de DK Partners.
-- Inicio de sesión con correo y contraseña mediante Supabase Auth.
-- Lectura del perfil, rol y estado activo desde `profiles`.
-- Casilla para mantener la sesión en el dispositivo.
-- Siguiente: espacio de trabajo del trabajador con ubicación, marcación por RPC e historial.
+- Pantalla de acceso con Supabase Auth, perfil, rol y sesión persistente opcional.
+- Espacio personal: estado de hoy, entrada/salida con permiso de ubicación durante el uso e historial mensual.
+- La marca se envía a la RPC `record_attendance_with_location`; las sedes, el radio y la precisión se validan en Supabase.
+- El administrador también ve y registra su asistencia propia; el backend la excluye de Google Sheets.
+- Siguiente: panel móvil del administrador para consultar al equipo y gestionar correcciones, sedes y re-sincronización.
 
 ## Tecnologías
 
 - Flutter y Dart.
-- Supabase Auth y base de datos con las políticas RLS ya existentes.
+- Supabase Auth, perfiles, asistencias y políticas RLS ya existentes.
+- Geolocator: ubicación consultada solo al marcar, sin seguimiento en segundo plano.
 - Firebase Cloud Messaging y Supabase Cron/Edge Functions para una fase posterior de notificaciones.
 - Google Sheets sigue sincronizándose desde el backend; la app no escribe directamente en la hoja.
 
@@ -38,22 +38,24 @@ Desde la raíz del repositorio, con un teléfono conectado y autorizado para dep
 ```powershell
 flutter pub get
 flutter devices
-flutter run --dart-define-from-file=supabase.local.json
+flutter run -d ID_DEL_TELEFONO --dart-define-from-file=supabase.local.json
 ```
 
-Si hay varios dispositivos, indica el ID:
+Al marcar, la app pedirá ubicación en primer plano y mostrará una confirmación antes de llamar a Supabase. La acción genera o actualiza una asistencia real en el proyecto configurado. No se han añadido escrituras automáticas de prueba.
+
+Para reducir el uso de C: puedes mantener la caché en D: en la terminal de VS Code:
 
 ```powershell
-flutter run -d ID_DEL_TELEFONO --dart-define-from-file=supabase.local.json
+$env:PUB_CACHE = "D:\flutter\pub-cache"
+$env:GRADLE_USER_HOME = "D:\flutter\gradle-cache"
 ```
 
 En VS Code también puedes seleccionar el dispositivo y ejecutar la aplicación con F5. Para compilar iOS se necesita macOS con Xcode.
 
 ## Fases siguientes
 
-1. Espacio de trabajo del trabajador: estado de hoy, marcación con geolocalización vía RPC e historial personal.
-2. Panel móvil de administración: asistencias del equipo, correcciones auditadas, sedes y re-sincronización.
-3. Notificaciones: permisos, registro de dispositivos, FCM y recordatorios programados.
-4. Validación en Android/iOS y preparación de publicación.
+1. Panel móvil del administrador: asistencias del equipo, correcciones auditadas, sedes y re-sincronización.
+2. Notificaciones: registro de dispositivos, FCM y recordatorios programados.
+3. Validación en Android/iOS y preparación de publicación.
 
 Los commits del proyecto se mantienen pequeños y en español.

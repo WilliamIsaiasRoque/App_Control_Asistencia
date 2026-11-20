@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/auth/domain/user_profile.dart';
 import 'features/auth/presentation/login_screen.dart';
+import 'features/attendance/presentation/personal_workspace_screen.dart';
 import 'theme/app_theme.dart';
 
 class ControlAsistenciaApp extends StatelessWidget {
@@ -113,7 +114,10 @@ class _AuthGateState extends State<_AuthGate> {
             onAction: _auth.signOut,
           );
         }
-        return _SignedInScreen(profile: profile, onSignOut: _auth.signOut);
+        return PersonalWorkspaceScreen(
+          profile: profile,
+          onSignOut: _auth.signOut,
+        );
       },
     );
   }
@@ -152,72 +156,6 @@ class _SetupScreen extends StatelessWidget {
             'Falta la configuración local de Supabase. Ejecuta la app con '
             '--dart-define-from-file=supabase.local.json.',
             textAlign: TextAlign.center,
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-class _SignedInScreen extends StatelessWidget {
-  const _SignedInScreen({required this.profile, required this.onSignOut});
-
-  final UserProfile profile;
-  final Future<void> Function() onSignOut;
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('DK PARTNERS'),
-      actions: [
-        IconButton(
-          tooltip: 'Cerrar sesión',
-          onPressed: onSignOut,
-          icon: const Icon(Icons.logout),
-        ),
-      ],
-    ),
-    body: SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Icon(
-                  Icons.verified_user_outlined,
-                  size: 52,
-                  color: AppColors.navy,
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Bienvenido, ${profile.fullName}',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  profile.role == 'admin' ? 'Administrador' : 'Trabajador',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.muted),
-                ),
-                const SizedBox(height: 28),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(18),
-                    child: Text(
-                      'Tu cuenta está conectada. El siguiente paso será '
-                      'mostrar aquí tu espacio de trabajo.',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.ink),
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ),
