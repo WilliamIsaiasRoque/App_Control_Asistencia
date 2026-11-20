@@ -1,4 +1,4 @@
-# Dart / Flutter
+# Flutter / Dart
 .dart_tool/
 .packages
 .pub/
@@ -10,9 +10,9 @@ coverage/
 .flutter-asset-manifest
 .flutter-build/
 
-# Keep pubspec.lock committed for this application.
+# Keep pubspec.lock: this is an application.
 
-# Android / Gradle
+# Android / Gradle local state and signing material
 .gradle/
 /android/local.properties
 /android/key.properties
@@ -23,13 +23,13 @@ coverage/
 *.jks
 *.keystore
 
-# IDEs
+# IDE files
 .idea/
 *.iml
 .vscode/*
 !.vscode/extensions.json
 
-# Local environment and credentials
+# Local credentials
 .env
 .env.*
 !.env.example

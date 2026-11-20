@@ -1,33 +1,44 @@
 # Control Asistencia DK Partners Mobile
 
-Aplicacion movil para trabajadores y administracion de DK Partners. Este repositorio inicia la adaptacion a Flutter y busca dar soporte a Android y iOS con una interfaz pensada para telefono.
+Aplicacion Flutter para adaptar a Android y iPhone el sistema de asistencia que ya funciona en la web. La experiencia y las reglas existentes se toman como referencia; Supabase continua siendo la fuente de verdad.
 
-## Estado
+## Estado actual
 
-Repositorio inicial. Las funciones se incorporaran por fases y commits pequenos. La aplicacion web actual se mantiene separada durante el desarrollo.
+- Estructura Flutter creada para Android e iOS.
+- Tema y pantalla de acceso adaptados a los colores, logo y textos de la version web.
+- La autenticacion y las operaciones de asistencia se conectaran en los siguientes commits.
 
-## Stack previsto
+## Stack
 
-- Flutter y Dart para la aplicacion movil.
-- Supabase para autenticacion, perfiles, asistencias, ubicaciones y funciones RPC existentes.
+- Flutter y Dart para la app movil.
+- Supabase para autenticacion, perfiles, asistencias, ubicaciones y RPC existentes.
 - Firebase Cloud Messaging para notificaciones push.
-- Supabase Cron y Edge Functions para decidir y enviar recordatorios desde el servidor.
-- Google Sheets sigue siendo una copia sincronizada desde el backend; la app movil no debe escribir directamente a la hoja.
+- Supabase Cron y Edge Functions para programar recordatorios en el servidor.
+- Google Sheets permanece como copia sincronizada desde el backend.
 
-La base de datos y las reglas de asistencia existentes en Supabase se conservan. La app debe usar la clave publishable y las politicas RLS; nunca debe incluir la service role key ni credenciales privadas de Firebase.
+La app usara la clave publishable y respetara las politicas RLS. Nunca se incluiran la service role key ni credenciales privadas de Firebase en el cliente.
 
-## Fases de desarrollo
+## Fases
 
-1. **Base movil:** estructura Flutter, tema DK Partners, navegacion, configuracion por entorno y cliente Supabase.
-2. **Acceso y experiencia del trabajador:** inicio de sesion, perfil, permisos de ubicacion, marcacion de entrada/salida mediante la RPC existente e historial personal.
-3. **Panel del administrador:** resumen del equipo, horarios, correccion auditada de marcas, gestion de ubicaciones y re-sincronizacion de Google Sheets.
-4. **Notificaciones:** registro seguro de dispositivos, permisos y sonido, envio por FCM y programacion en el backend. Los recordatorios deben detenerse al registrar salida; falta definir la hora limite para dejar de insistir.
-5. **Verificacion y publicacion:** pruebas en dispositivos Android y iPhone, permisos, ubicaciones, sesiones, notificaciones y compilaciones firmadas.
+1. **Base visual y navegacion:** scaffold Flutter, tema DK Partners y pantalla de acceso reutilizando el flujo web.
+2. **Acceso y perfiles:** autenticacion Supabase, sesion, perfiles y navegacion por rol.
+3. **Trabajador:** ubicacion, marcacion por la RPC existente e historial personal.
+4. **Administrador:** panel, horarios del equipo, correcciones auditadas, ubicaciones y re-sincronizacion.
+5. **Notificaciones:** tokens de dispositivos, permisos, FCM y recordatorios programados en Supabase.
+6. **Validacion y publicacion:** pruebas en Android/iPhone y preparacion de compilaciones firmadas.
 
-Cada fase se dividira en commits pequenos para poder revisar y desplegar cambios de manera controlada.
+Cada fase se mantendra en commits pequenos y en espanol.
 
-## Desarrollo
+## Ejecutar en Android
 
-Requisitos previstos: Flutter SDK, Dart, Android Studio con Android SDK y un dispositivo o emulador Android. Para compilar y publicar la version iOS se necesita macOS con Xcode.
+Desde la raiz del repositorio:
 
-Las credenciales locales deben configurarse fuera del repositorio. Se puede usar `.env.example` como plantilla sin secretos.
+```powershell
+flutter pub get
+flutter devices
+flutter run
+```
+
+VS Code puede lanzar la app con F5 y aplicar hot reload durante el desarrollo. Esta primera pantalla es visual; el acceso real se conectara con Supabase en el siguiente paso.
+
+Para compilar iOS se necesita macOS con Xcode.
