@@ -10,6 +10,12 @@ class TeamMemberAttendance {
   final AttendanceRecord? record;
 }
 
+class TeamMemberHistory {
+  const TeamMemberHistory({required this.profile, required this.records});
+  final UserProfile profile;
+  final List<AttendanceRecord> records;
+}
+
 class AttendanceRepository {
   AttendanceRepository(this._client);
 
@@ -70,6 +76,39 @@ class AttendanceRepository {
       return TeamMemberAttendance(
         profile: profile,
         record: attendanceByWorker[profile.id],
+      );
+    }).toList();
+  }
+
+  Future<List<TeamMemberHistory>> loadTeamMonth({
+    required String monthStart,
+    required String monthEnd,
+  }) async {
+    final responses = await Future.wait<Object?>([
+      _client
+          .from('profiles')
+          .select('id,full_name,role,is_active')
+          .eq('role', 'worker')
+          .order('full_name'),
+      _client
+          .from('attendance_records')
+          .select('id,worker_id,work_date,check_in_at,check_out_at')
+          .gte('work_date', monthStart)
+          .lte('work_date', monthEnd)
+          .order('work_date', ascending: false),
+    ]);
+    final profiles = responses[0] as List<dynamic>;
+    final rows = responses[1] as List<dynamic>;
+    final grouped = <String, List<AttendanceRecord>>{};
+    for (final row in rows) {
+      final record = AttendanceRecord.fromJson(row as Map<String, dynamic>);
+      grouped.putIfAbsent(record.workerId, () => []).add(record);
+    }
+    return profiles.map((row) {
+      final profile = UserProfile.fromJson(row as Map<String, dynamic>);
+      return TeamMemberHistory(
+        profile: profile,
+        records: grouped[profile.id] ?? const [],
       );
     }).toList();
   }

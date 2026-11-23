@@ -34,8 +34,13 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
   AttendanceRecord? _today;
   List<AttendanceRecord> _records = [];
   List<TeamMemberAttendance> _team = [];
+  List<TeamMemberHistory> _teamHistory = [];
+  DateTime _teamHistoryMonth = _peruNow;
+  String? _selectedTeamWorkerId;
   bool _teamLoading = false;
+  bool _teamHistoryLoading = false;
   String? _teamError;
+  String? _teamHistoryError;
   Timer? _timer;
   bool _loading = true;
   bool _attendanceLoadFailed = false;
@@ -122,9 +127,60 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
     }
   }
 
+  Future<void> _loadTeamHistory() async {
+    setState(() {
+      _teamHistoryLoading = true;
+      _teamHistoryError = null;
+    });
+    try {
+      final start = DateTime(_teamHistoryMonth.year, _teamHistoryMonth.month);
+      final end = DateTime(
+        _teamHistoryMonth.year,
+        _teamHistoryMonth.month + 1,
+        0,
+      );
+      final history = await _repository.loadTeamMonth(
+        monthStart: _dateKey(start),
+        monthEnd: _dateKey(end),
+      );
+      if (!mounted) return;
+      setState(() {
+        _teamHistory = history;
+        if (_selectedTeamWorkerId != null &&
+            !history.any((item) => item.profile.id == _selectedTeamWorkerId)) {
+          _selectedTeamWorkerId = null;
+        }
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _teamHistoryError = 'No se pudo cargar el historial del equipo. Revisa tu conexión y vuelve a actualizar.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _teamHistoryLoading = false);
+    }
+  }
+
+  Future<void> _changeTeamHistoryMonth(int amount) async {
+    final next = DateTime(
+      _teamHistoryMonth.year,
+      _teamHistoryMonth.month + amount,
+    );
+    final now = _peruNow;
+    if (next.year > now.year ||
+        (next.year == now.year && next.month > now.month)) {
+      return;
+    }
+    setState(() => _teamHistoryMonth = next);
+    await _loadTeamHistory();
+  }
+
   Future<void> _refreshCurrentTab(bool admin) async {
     if (admin && _tab == 1) {
       await _loadTeam();
+    } else if (admin && _tab == 3) {
+      await _loadTeamHistory();
     } else {
       await _load();
     }
@@ -249,8 +305,19 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
     return DateFormat('h:mm a', 'es_PE').format(lima);
   }
 
-  String _duration(int minutes) =>
-      '${minutes ~/ 60} h ${(minutes % 60).toString().padLeft(2, '0')} min';
+  String _duration(int minutes) {
+    final hours = minutes ~/ 60;
+    final rest = (minutes % 60).toString().padLeft(2, '0');
+    return '$hours h $rest min';
+  }
+
+  int _recordMinutes(AttendanceRecord record) {
+    if (record.checkOutAt == null && record.workDate != _dateKey(_peruNow)) {
+      return 0;
+    }
+    return record.workedMinutes;
+  }
+
   String _capitalize(String value) =>
       value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
 
@@ -278,6 +345,8 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
       page = _teamPage();
     } else if (admin && _tab == 2) {
       page = _historyPage();
+    } else if (admin && _tab == 3) {
+      page = _teamHistoryPage();
     } else if (!admin && _tab == 1) {
       page = _historyPage();
     } else {
@@ -320,6 +389,8 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
           setState(() => _tab = value);
           if (admin && value == 1) {
             unawaited(_loadTeam());
+          } else if (admin && value == 3) {
+            unawaited(_loadTeamHistory());
           } else {
             unawaited(_load());
           }
@@ -340,6 +411,11 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
                   icon: Icon(Icons.calendar_month_outlined),
                   selectedIcon: Icon(Icons.calendar_month),
                   label: 'Mi Registro',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.manage_search_outlined),
+                  selectedIcon: Icon(Icons.manage_search),
+                  label: 'Historial equipo',
                 ),
               ]
             : const [
@@ -717,6 +793,208 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
     );
   }
 
+  Widget _teamHistoryPage() {
+    final selected = _teamHistory.where(
+      (member) =>
+          _selectedTeamWorkerId == null ||
+          member.profile.id == _selectedTeamWorkerId,
+    );
+    final groups = selected
+        .map(
+          (member) => MapEntry(
+            member,
+            member.records.where((record) => record.checkInAt != null).toList(),
+          ),
+        )
+        .where((entry) => entry.value.isNotEmpty)
+        .toList();
+    final records = groups.expand((entry) => entry.value).toList();
+    final totalMinutes = records.fold<int>(
+      0,
+      (total, record) => total + _recordMinutes(record),
+    );
+    final complete = records
+        .where((record) => record.checkOutAt != null)
+        .length;
+    final monthLabel = _capitalize(
+      DateFormat('MMMM yyyy', 'es_PE').format(_teamHistoryMonth),
+    );
+    final now = _peruNow;
+    final currentMonth =
+        _teamHistoryMonth.year == now.year &&
+        _teamHistoryMonth.month == now.month;
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
+      children: [
+        const Text(
+          'ADMINISTRACIÓN · EQUIPO',
+          style: TextStyle(
+            color: AppColors.muted,
+            fontSize: 10,
+            letterSpacing: 2,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Historial del equipo',
+          style: Theme.of(context).textTheme.headlineSmall
+              ?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Consulta las marcas por trabajador y mes.',
+          style: TextStyle(color: AppColors.muted),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          child: Row(
+            children: [
+              IconButton(
+                tooltip: 'Mes anterior',
+                onPressed: _teamHistoryLoading
+                    ? null
+                    : () => _changeTeamHistoryMonth(-1),
+                icon: const Icon(Icons.chevron_left),
+              ),
+              Expanded(
+                child: Text(
+                  monthLabel,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.navyDark,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Mes siguiente',
+                onPressed: _teamHistoryLoading || currentMonth
+                    ? null
+                    : () => _changeTeamHistoryMonth(1),
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String?>(
+          initialValue: _selectedTeamWorkerId,
+          decoration: const InputDecoration(
+            labelText: 'Trabajador',
+            prefixIcon: Icon(Icons.person_outline),
+          ),
+          items: [
+            const DropdownMenuItem<String?>(
+              value: null,
+              child: Text('Todo el equipo'),
+            ),
+            ..._teamHistory.map(
+              (member) => DropdownMenuItem<String?>(
+                value: member.profile.id,
+                child: Text(member.profile.fullName),
+              ),
+            ),
+          ],
+          onChanged: _teamHistoryLoading
+              ? null
+              : (value) => setState(() => _selectedTeamWorkerId = value),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _SummaryCard(
+                label: 'DÍAS CON MARCA',
+                value: '${records.length}',
+                subtitle: 'En el mes seleccionado',
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _SummaryCard(
+                label: 'JORNADAS COMPLETAS',
+                value: '$complete',
+                subtitle: 'Con entrada y salida',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        _SummaryCard(
+          label: 'HORAS REGISTRADAS',
+          value: _duration(totalMinutes),
+          subtitle: 'Suma de jornadas del filtro',
+          wide: true,
+        ),
+        const SizedBox(height: 14),
+        if (_teamHistoryError != null) _ErrorCard(message: _teamHistoryError!),
+        if (_teamHistoryLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: LinearProgressIndicator(minHeight: 2),
+          ),
+        if (!_teamHistoryLoading && _teamHistory.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 28),
+            child: Text(
+              'No se encontraron trabajadores.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.muted),
+            ),
+          )
+        else if (!_teamHistoryLoading && records.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 28),
+            child: Text(
+              'No hay asistencias registradas para este trabajador y mes.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.muted),
+            ),
+          )
+        else
+          ...groups.expand(
+            (entry) => [
+              Padding(
+                padding: const EdgeInsets.only(top: 16, bottom: 2),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        entry.key.profile.fullName,
+                        style: const TextStyle(
+                          color: AppColors.navyDark,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '${entry.value.length} ${entry.value.length == 1 ? 'día' : 'días'}',
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ...entry.value.map(_historyCard),
+            ],
+          ),
+        const Divider(height: 28),
+        const Text(
+          'Horario mostrado en hora de Perú.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppColors.muted, fontSize: 10),
+        ),
+      ],
+    );
+  }
+
   Widget _historyPage() {
     final start = DateTime(_month.year, _month.month);
     final end = DateTime(_month.year, _month.month + 1, 0);
@@ -914,7 +1192,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
               Expanded(
                 child: _HistoryTime(
                   label: 'HORAS',
-                  value: _duration(record.workedMinutes),
+                  value: _duration(_recordMinutes(record)),
                 ),
               ),
             ],
