@@ -16,6 +16,25 @@ class TeamMemberHistory {
   final List<AttendanceRecord> records;
 }
 
+class AttendanceAdjustment {
+  const AttendanceAdjustment({
+    required this.workerName,
+    required this.workDate,
+    required this.reason,
+    this.oldCheckInAt,
+    this.oldCheckOutAt,
+    this.newCheckInAt,
+    this.newCheckOutAt,
+  });
+  final String workerName;
+  final String workDate;
+  final String reason;
+  final String? oldCheckInAt;
+  final String? oldCheckOutAt;
+  final String? newCheckInAt;
+  final String? newCheckOutAt;
+}
+
 class AttendanceRepository {
   AttendanceRepository(this._client);
 
@@ -111,6 +130,75 @@ class AttendanceRepository {
         records: grouped[profile.id] ?? const [],
       );
     }).toList();
+  }
+
+  Future<List<UserProfile>> loadCorrectionWorkers() async {
+    final rows = await _client
+        .from('profiles')
+        .select('id,full_name,role,is_active')
+        .eq('role', 'worker')
+        .eq('is_active', true)
+        .order('full_name');
+    return (rows as List<dynamic>)
+        .map((row) => UserProfile.fromJson(row as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<AttendanceAdjustment>> loadRecentAdjustments() async {
+    final rows =
+        await _client
+                .from('attendance_adjustments')
+                .select(
+                  'worker_id,work_date,reason,old_check_in_at,old_check_out_at,new_check_in_at,new_check_out_at',
+                )
+                .order('created_at', ascending: false)
+                .limit(12)
+            as List<dynamic>;
+    if (rows.isEmpty) return const [];
+    final ids = rows
+        .map((row) => (row as Map<String, dynamic>)['worker_id'] as String)
+        .toSet()
+        .toList();
+    final profiles = await _client
+        .from('profiles')
+        .select('id,full_name')
+        .inFilter('id', ids);
+    final names = {
+      for (final row in profiles as List<dynamic>)
+        (row as Map<String, dynamic>)['id'] as String:
+            row['full_name'] as String? ?? 'Trabajador',
+    };
+    return rows.map((row) {
+      final item = row as Map<String, dynamic>;
+      return AttendanceAdjustment(
+        workerName: names[item['worker_id']] ?? 'Trabajador',
+        workDate: item['work_date'] as String,
+        reason: item['reason'] as String,
+        oldCheckInAt: item['old_check_in_at'] as String?,
+        oldCheckOutAt: item['old_check_out_at'] as String?,
+        newCheckInAt: item['new_check_in_at'] as String?,
+        newCheckOutAt: item['new_check_out_at'] as String?,
+      );
+    }).toList();
+  }
+
+  Future<void> correctAttendance({
+    required String workerId,
+    required String workDate,
+    required String? checkInAt,
+    required String? checkOutAt,
+    required String reason,
+  }) async {
+    await _client.rpc(
+      'admin_correct_attendance',
+      params: {
+        'p_worker_id': workerId,
+        'p_work_date': workDate,
+        'p_check_in_at': checkInAt,
+        'p_check_out_at': checkOutAt,
+        'p_reason': reason,
+      },
+    );
   }
 
   Future<AttendanceMarkResult> mark(Position position) async {

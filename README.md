@@ -8,8 +8,8 @@ App móvil Flutter para Android y iPhone, basada en la interfaz y las reglas del
 - Espacio personal: estado de hoy, entrada/salida con permiso de ubicación durante el uso e historial mensual.
 - La marca se envía a la RPC `record_attendance_with_location`; las sedes, el radio y la precisión se validan en Supabase.
 - El administrador ve y registra su asistencia propia; el backend la excluye de Google Sheets.
-- El administrador tiene pestañas de estado diario e historial mensual filtrable por trabajador.
-- Siguiente: herramientas administrativas de corrección, sedes y re-sincronización.
+- El administrador tiene vistas de asistencia diaria, historial mensual filtrable por trabajador y corrección auditada conectada al RPC existente.
+- Siguiente: configuración de sedes y re-sincronización desde la app.
 
 ## Tecnologías
 
@@ -55,7 +55,7 @@ En VS Code también puedes seleccionar el dispositivo y ejecutar la aplicación 
 
 ## Fases siguientes
 
-1. Completar el panel del administrador: historial del equipo, correcciones auditadas, sedes y re-sincronización.
+1. Completar el panel del administrador con configuración de sedes y re-sincronización.
 2. Notificaciones: registro de dispositivos, FCM y recordatorios programados.
 3. Validación en Android/iOS y preparación de publicación.
 

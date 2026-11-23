@@ -9,6 +9,7 @@ import '../../../features/auth/domain/user_profile.dart';
 import '../../../theme/app_theme.dart';
 import '../data/attendance_record.dart';
 import '../data/attendance_repository.dart';
+import 'admin_attendance_correction_screen.dart';
 
 class PersonalWorkspaceScreen extends StatefulWidget {
   const PersonalWorkspaceScreen({
@@ -25,6 +26,7 @@ class PersonalWorkspaceScreen extends StatefulWidget {
 }
 
 class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
+  final _correctionKey = GlobalKey<AdminAttendanceCorrectionScreenState>();
   late final AttendanceRepository _repository = AttendanceRepository(
     Supabase.instance.client,
   );
@@ -181,6 +183,8 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
       await _loadTeam();
     } else if (admin && _tab == 3) {
       await _loadTeamHistory();
+    } else if (admin && _tab == 4) {
+      await _correctionKey.currentState?.refresh();
     } else {
       await _load();
     }
@@ -347,6 +351,15 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
       page = _historyPage();
     } else if (admin && _tab == 3) {
       page = _teamHistoryPage();
+    } else if (admin && _tab == 4) {
+      page = AdminAttendanceCorrectionScreen(
+        key: _correctionKey,
+        onSaved: () async {
+          await _load(spinner: false);
+          await _loadTeam();
+          await _loadTeamHistory();
+        },
+      );
     } else if (!admin && _tab == 1) {
       page = _historyPage();
     } else {
@@ -416,6 +429,11 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
                   icon: Icon(Icons.manage_search_outlined),
                   selectedIcon: Icon(Icons.manage_search),
                   label: 'Historial equipo',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.edit_calendar_outlined),
+                  selectedIcon: Icon(Icons.edit_calendar),
+                  label: 'Corregir',
                 ),
               ]
             : const [
