@@ -35,6 +35,81 @@ class AttendanceAdjustment {
   final String? newCheckOutAt;
 }
 
+class AttendanceLocationSite {
+  const AttendanceLocationSite({
+    required this.id,
+    required this.code,
+    required this.name,
+    required this.latitude,
+    required this.longitude,
+    required this.radiusM,
+    required this.maxAccuracyM,
+    required this.isActive,
+    required this.isVisible,
+  });
+  final String id;
+  final String code;
+  final String name;
+  final double latitude;
+  final double longitude;
+  final int radiusM;
+  final int maxAccuracyM;
+  final bool isActive;
+  final bool isVisible;
+
+  factory AttendanceLocationSite.fromJson(Map<String, dynamic> json) =>
+      AttendanceLocationSite(
+        id: json['id'] as String,
+        code: json['code'] as String,
+        name: json['name'] as String,
+        latitude: (json['latitude'] as num).toDouble(),
+        longitude: (json['longitude'] as num).toDouble(),
+        radiusM: json['radius_m'] as int,
+        maxAccuracyM: json['max_accuracy_m'] as int,
+        isActive: json['is_active'] as bool,
+        isVisible: json['is_visible'] as bool? ?? true,
+      );
+}
+
+class AttendanceLocationAssignment {
+  const AttendanceLocationAssignment({
+    required this.siteId,
+    required this.workerId,
+  });
+  final String siteId;
+  final String workerId;
+}
+
+class AttendanceLocationAdminData {
+  const AttendanceLocationAdminData({
+    required this.sites,
+    required this.workers,
+    required this.assignments,
+  });
+  final List<AttendanceLocationSite> sites;
+  final List<UserProfile> workers;
+  final List<AttendanceLocationAssignment> assignments;
+}
+
+class AttendanceSyncLog {
+  const AttendanceSyncLog({
+    required this.attendanceId,
+    required this.status,
+    required this.attempts,
+    required this.updatedAt,
+    this.error,
+    this.workDate,
+    this.workerName,
+  });
+  final String attendanceId;
+  final String status;
+  final int attempts;
+  final String updatedAt;
+  final String? error;
+  final String? workDate;
+  final String? workerName;
+}
+
 class AttendanceRepository {
   AttendanceRepository(this._client);
 
@@ -133,10 +208,12 @@ class AttendanceRepository {
   }
 
   Future<List<UserProfile>> loadCorrectionWorkers() async {
+    final adminId = _client.auth.currentUser?.id;
+    if (adminId == null) return const [];
     final rows = await _client
         .from('profiles')
         .select('id,full_name,role,is_active')
-        .eq('role', 'worker')
+        .or('role.eq.worker,id.eq.$adminId')
         .eq('is_active', true)
         .order('full_name');
     return (rows as List<dynamic>)
@@ -199,6 +276,138 @@ class AttendanceRepository {
         'p_reason': reason,
       },
     );
+  }
+
+  Future<AttendanceLocationAdminData> loadLocationAdminData() async {
+    final results = await Future.wait<Object?>([
+      _client
+          .from('attendance_location_sites')
+          .select(
+            'id,code,name,latitude,longitude,radius_m,max_accuracy_m,is_active,is_visible',
+          )
+          .eq('is_visible', true)
+          .order('name'),
+      _client
+          .from('profiles')
+          .select('id,full_name,role,is_active')
+          .eq('role', 'worker')
+          .eq('is_active', true)
+          .order('full_name'),
+      _client
+          .from('attendance_location_site_workers')
+          .select('site_id,worker_id'),
+    ]);
+    return AttendanceLocationAdminData(
+      sites: (results[0] as List<dynamic>)
+          .map(
+            (row) =>
+                AttendanceLocationSite.fromJson(row as Map<String, dynamic>),
+          )
+          .toList(),
+      workers: (results[1] as List<dynamic>)
+          .map((row) => UserProfile.fromJson(row as Map<String, dynamic>))
+          .toList(),
+      assignments: (results[2] as List<dynamic>)
+          .map(
+            (row) => AttendanceLocationAssignment(
+              siteId: (row as Map<String, dynamic>)['site_id'] as String,
+              workerId: row['worker_id'] as String,
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Future<String> saveLocationSite({
+    required String? siteId,
+    required String name,
+    required double latitude,
+    required double longitude,
+    required int radiusM,
+    required int maxAccuracyM,
+    required bool isActive,
+    required List<String> workerIds,
+  }) async {
+    final result = await _client.rpc(
+      'save_attendance_location_site',
+      params: {
+        'p_site_id': siteId,
+        'p_name': name,
+        'p_latitude': latitude,
+        'p_longitude': longitude,
+        'p_radius_m': radiusM,
+        'p_max_accuracy_m': maxAccuracyM,
+        'p_is_active': isActive,
+        'p_worker_ids': workerIds,
+      },
+    );
+    return result as String;
+  }
+
+  Future<List<AttendanceSyncLog>> loadSyncLogs({int limit = 30}) async {
+    final rows =
+        await _client
+                .from('sync_log')
+                .select('attendance_id,status,error,intentos,updated_at')
+                .order('updated_at', ascending: false)
+                .limit(limit)
+            as List<dynamic>;
+    if (rows.isEmpty) return const [];
+    final attendanceIds = rows
+        .map((row) => (row as Map<String, dynamic>)['attendance_id'] as String)
+        .toList();
+    final attendanceRows =
+        await _client
+                .from('attendance_records')
+                .select('id,worker_id,work_date')
+                .inFilter('id', attendanceIds)
+            as List<dynamic>;
+    final attendanceById = <String, Map<String, dynamic>>{
+      for (final row in attendanceRows)
+        (row as Map<String, dynamic>)['id'] as String: row,
+    };
+    final workerIds = attendanceRows
+        .map((row) => (row as Map<String, dynamic>)['worker_id'] as String)
+        .toSet()
+        .toList();
+    final profiles = workerIds.isEmpty
+        ? <dynamic>[]
+        : await _client
+                  .from('profiles')
+                  .select('id,full_name')
+                  .inFilter('id', workerIds)
+              as List<dynamic>;
+    final names = {
+      for (final row in profiles)
+        (row as Map<String, dynamic>)['id'] as String:
+            row['full_name'] as String? ?? 'Trabajador',
+    };
+    return rows.map((row) {
+      final log = row as Map<String, dynamic>;
+      final attendance = attendanceById[log['attendance_id']];
+      return AttendanceSyncLog(
+        attendanceId: log['attendance_id'] as String,
+        status: log['status'] as String,
+        attempts: log['intentos'] as int? ?? 0,
+        updatedAt: log['updated_at'] as String,
+        error: log['error'] as String?,
+        workDate: attendance?['work_date'] as String?,
+        workerName: attendance == null
+            ? null
+            : names[attendance['worker_id']] ?? 'Trabajador',
+      );
+    }).toList();
+  }
+
+  Future<int> queueAttendanceResync({
+    required String fromDate,
+    required String toDate,
+  }) async {
+    final count = await _client.rpc(
+      'queue_attendance_resync',
+      params: {'p_from_date': fromDate, 'p_to_date': toDate},
+    );
+    return (count as num).toInt();
   }
 
   Future<AttendanceMarkResult> mark(Position position) async {

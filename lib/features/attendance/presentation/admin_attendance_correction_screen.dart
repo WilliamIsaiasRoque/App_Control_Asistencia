@@ -259,6 +259,7 @@ class AdminAttendanceCorrectionScreenState
                 DropdownButtonFormField<String>(
                   key: ValueKey(_workerId),
                   initialValue: _workerId,
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Trabajador',
                     prefixIcon: Icon(Icons.person_outline),
@@ -267,7 +268,13 @@ class AdminAttendanceCorrectionScreenState
                       .map(
                         (worker) => DropdownMenuItem(
                           value: worker.id,
-                          child: Text(worker.fullName),
+                          child: Text(
+                            worker.role == 'admin'
+                                ? '${worker.fullName} (Administrador)'
+                                : worker.fullName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       )
                       .toList(),
@@ -402,13 +409,19 @@ class _TimePickerRow extends StatelessWidget {
   final VoidCallback? onPick;
   final VoidCallback? onClear;
   @override
-  Widget build(BuildContext context) => ListTile(
-    contentPadding: EdgeInsets.zero,
-    title: Text(label),
-    subtitle: Text(value),
-    trailing: Row(
-      mainAxisSize: MainAxisSize.min,
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
       children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label),
+              Text(value, style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+        ),
         IconButton(
           tooltip: 'Elegir hora',
           onPressed: onPick,

@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../features/auth/domain/user_profile.dart';
 import '../../../theme/app_theme.dart';
 import '../data/attendance_record.dart';
 import '../data/attendance_repository.dart';
-import 'admin_attendance_correction_screen.dart';
+import 'admin_tools_screen.dart';
 
 class PersonalWorkspaceScreen extends StatefulWidget {
   const PersonalWorkspaceScreen({
@@ -26,7 +27,7 @@ class PersonalWorkspaceScreen extends StatefulWidget {
 }
 
 class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
-  final _correctionKey = GlobalKey<AdminAttendanceCorrectionScreenState>();
+  final _adminToolsKey = GlobalKey<AdminToolsScreenState>();
   late final AttendanceRepository _repository = AttendanceRepository(
     Supabase.instance.client,
   );
@@ -178,13 +179,24 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
     await _loadTeamHistory();
   }
 
+  Future<void> _openAttendanceSheet() async {
+    final uri = Uri.parse(
+      'https://docs.google.com/spreadsheets/d/1qtxU2ZZEraO4h07jq0SD3mXlUhCMcltmuIhxw7sOetE/edit',
+    );
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!mounted || opened) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No se pudo abrir Google Sheets.')),
+    );
+  }
+
   Future<void> _refreshCurrentTab(bool admin) async {
     if (admin && _tab == 1) {
       await _loadTeam();
     } else if (admin && _tab == 3) {
       await _loadTeamHistory();
     } else if (admin && _tab == 4) {
-      await _correctionKey.currentState?.refresh();
+      await _adminToolsKey.currentState?.refresh();
     } else {
       await _load();
     }
@@ -352,9 +364,9 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
     } else if (admin && _tab == 3) {
       page = _teamHistoryPage();
     } else if (admin && _tab == 4) {
-      page = AdminAttendanceCorrectionScreen(
-        key: _correctionKey,
-        onSaved: () async {
+      page = AdminToolsScreen(
+        key: _adminToolsKey,
+        onCorrectionSaved: () async {
           await _load(spinner: false);
           await _loadTeam();
           await _loadTeamHistory();
@@ -431,9 +443,9 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
                   label: 'Historial equipo',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.edit_calendar_outlined),
-                  selectedIcon: Icon(Icons.edit_calendar),
-                  label: 'Corregir',
+                  icon: Icon(Icons.admin_panel_settings_outlined),
+                  selectedIcon: Icon(Icons.admin_panel_settings),
+                  label: 'Administración',
                 ),
               ]
             : const [
@@ -606,6 +618,22 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
             ),
           ),
         ),
+        if (admin) ...[
+          const SizedBox(height: 14),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: FilledButton.icon(
+                onPressed: _openAttendanceSheet,
+                icon: const Icon(Icons.table_chart_outlined),
+                label: const Text('Abrir Excel de asistencia'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                ),
+              ),
+            ),
+          ),
+        ],
         if (_loading)
           const Padding(
             padding: EdgeInsets.only(top: 16),
