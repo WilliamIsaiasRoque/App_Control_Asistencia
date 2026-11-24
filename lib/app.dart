@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/notifications/push_device_service.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/auth/domain/user_profile.dart';
 import 'features/auth/presentation/login_screen.dart';
@@ -34,6 +36,10 @@ class _AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<_AuthGate> {
   late final AuthRepository _auth = AuthRepository(Supabase.instance.client);
+  late final PushDeviceService _pushDevices = PushDeviceService(
+    Supabase.instance.client,
+  );
+  String? _pushRegistrationStartedFor;
   StreamSubscription<AuthState>? _subscription;
   Session? _session;
   Future<UserProfile>? _profileFuture;
@@ -50,12 +56,39 @@ class _AuthGateState extends State<_AuthGate> {
     ) {
       if (!mounted) return;
       setState(() {
+        if (_session?.user.id != state.session?.user.id) {
+          _pushRegistrationStartedFor = null;
+        }
         _session = state.session;
         _profileFutureUserId = null;
         _profileFuture = null;
         _sessionReady = true;
         _loadProfileForCurrentSession();
       });
+    });
+  }
+
+  Future<void> _signOut() async {
+    try {
+      await _pushDevices.unregisterCurrentDevice();
+    } catch (error) {
+      debugPrint(
+        'FCM: no se pudo desactivar el dispositivo al cerrar sesión: $error',
+      );
+    }
+    await _auth.signOut();
+  }
+
+  void _schedulePushRegistration(String userId) {
+    if (_pushRegistrationStartedFor == userId) return;
+    _pushRegistrationStartedFor = userId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _session?.user.id != userId) return;
+      unawaited(
+        _pushDevices.registerForUser(userId).catchError((Object error) {
+          debugPrint('FCM: no se pudo registrar el dispositivo: $error');
+        }),
+      );
     });
   }
 
@@ -102,7 +135,7 @@ class _AuthGateState extends State<_AuthGate> {
             title: 'No pudimos cargar tu perfil',
             message: 'Contacta al administrador y vuelve a intentarlo.',
             actionLabel: 'Cerrar sesión',
-            onAction: _auth.signOut,
+            onAction: _signOut,
           );
         }
         final profile = snapshot.data!;
@@ -111,13 +144,11 @@ class _AuthGateState extends State<_AuthGate> {
             title: 'Cuenta desactivada',
             message: 'Contacta al administrador de DK Partners.',
             actionLabel: 'Cerrar sesión',
-            onAction: _auth.signOut,
+            onAction: _signOut,
           );
         }
-        return PersonalWorkspaceScreen(
-          profile: profile,
-          onSignOut: _auth.signOut,
-        );
+        _schedulePushRegistration(session.user.id);
+        return PersonalWorkspaceScreen(profile: profile, onSignOut: _signOut);
       },
     );
   }
