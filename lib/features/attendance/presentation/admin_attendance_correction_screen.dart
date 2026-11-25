@@ -290,8 +290,7 @@ class AdminAttendanceCorrectionScreenState
         const SizedBox(height: 16),
         if (_error != null) _CorrectionMessage(_error!, error: true),
         if (_notice != null) _CorrectionMessage(_notice!, error: false),
-        if (_formEdited)
-          const _PendingChangesMessage(),
+        if (_formEdited) const _PendingChangesMessage(),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -431,10 +430,7 @@ class AdminAttendanceCorrectionScreenState
                     '${_auditTime(item.oldCheckInAt)} / ${_auditTime(item.oldCheckOutAt)} → ${_auditTime(item.newCheckInAt)} / ${_auditTime(item.newCheckOutAt)}',
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    item.reason,
-                    style: const TextStyle(color: AppColors.muted),
-                  ),
+                  Text(item.reason, style: TextStyle(color: AppColors.muted)),
                 ],
               ),
             ),

@@ -16,10 +16,14 @@ class PersonalWorkspaceScreen extends StatefulWidget {
   const PersonalWorkspaceScreen({
     required this.profile,
     required this.onSignOut,
+    required this.isDarkMode,
+    required this.onToggleTheme,
     super.key,
   });
   final UserProfile profile;
   final Future<void> Function() onSignOut;
+  final bool isDarkMode;
+  final Future<void> Function() onToggleTheme;
 
   @override
   State<PersonalWorkspaceScreen> createState() =>
@@ -208,7 +212,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        icon: const Icon(Icons.location_on_outlined, color: AppColors.navy),
+        icon: Icon(Icons.location_on_outlined, color: AppColors.navy),
         title: Text('Registrar $eventName'),
         content: const Text(
           'Se consultará tu ubicación una vez para validar la marca. La app no rastrea tu ubicación en segundo plano.',
@@ -389,6 +393,17 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
         ),
         actions: [
           IconButton(
+            tooltip: widget.isDarkMode
+                ? 'Activar modo claro'
+                : 'Activar modo oscuro',
+            onPressed: widget.onToggleTheme,
+            icon: Icon(
+              widget.isDarkMode
+                  ? Icons.light_mode_outlined
+                  : Icons.dark_mode_outlined,
+            ),
+          ),
+          IconButton(
             tooltip: 'Actualizar',
             onPressed: (_loading || _teamLoading)
                 ? null
@@ -497,7 +512,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
           style: Theme.of(context).textTheme.headlineMedium,
         ),
         const SizedBox(height: 4),
-        Text(date, style: const TextStyle(color: AppColors.muted)),
+        Text(date, style: TextStyle(color: AppColors.muted)),
         const SizedBox(height: 22),
         if (_error != null) ...[
           _ErrorCard(message: _error!),
@@ -671,7 +686,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
               ?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
-        Text(date, style: const TextStyle(color: AppColors.muted)),
+        Text(date, style: TextStyle(color: AppColors.muted)),
         const SizedBox(height: 18),
         Row(
           children: [
@@ -1343,7 +1358,7 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             subtitle,
-            style: const TextStyle(color: AppColors.muted, fontSize: 10),
+            style: TextStyle(color: AppColors.muted, fontSize: 10),
           ),
         ],
       ),

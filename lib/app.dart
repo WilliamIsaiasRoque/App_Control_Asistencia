@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/notifications/push_device_service.dart';
@@ -11,24 +12,61 @@ import 'features/auth/presentation/login_screen.dart';
 import 'features/attendance/presentation/personal_workspace_screen.dart';
 import 'theme/app_theme.dart';
 
-class ControlAsistenciaApp extends StatelessWidget {
+class ControlAsistenciaApp extends StatefulWidget {
   const ControlAsistenciaApp({required this.supabaseConfigured, super.key});
 
   final bool supabaseConfigured;
 
   @override
+  State<ControlAsistenciaApp> createState() => _ControlAsistenciaAppState();
+}
+
+class _ControlAsistenciaAppState extends State<ControlAsistenciaApp> {
+  static const _themePreferenceKey = 'dark_mode_enabled';
+  bool _isDarkMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadThemePreference());
+  }
+
+  Future<void> _loadThemePreference() async {
+    final preferences = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(
+      () => _isDarkMode = preferences.getBool(_themePreferenceKey) ?? false,
+    );
+  }
+
+  Future<void> _toggleTheme() async {
+    final next = !_isDarkMode;
+    setState(() => _isDarkMode = next);
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setBool(_themePreferenceKey, next);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    AppColors.darkMode = _isDarkMode;
     return MaterialApp(
       title: 'Control de Asistencia DK Partners',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: supabaseConfigured ? const _AuthGate() : const _SetupScreen(),
+      darkTheme: AppTheme.dark,
+      themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      home: widget.supabaseConfigured
+          ? _AuthGate(isDarkMode: _isDarkMode, onToggleTheme: _toggleTheme)
+          : const _SetupScreen(),
     );
   }
 }
 
 class _AuthGate extends StatefulWidget {
-  const _AuthGate();
+  const _AuthGate({required this.isDarkMode, required this.onToggleTheme});
+
+  final bool isDarkMode;
+  final Future<void> Function() onToggleTheme;
 
   @override
   State<_AuthGate> createState() => _AuthGateState();
@@ -45,6 +83,7 @@ class _AuthGateState extends State<_AuthGate> {
   Future<UserProfile>? _profileFuture;
   String? _profileFutureUserId;
   bool _sessionReady = false;
+  bool _signingOut = false;
 
   @override
   void initState() {
@@ -69,14 +108,41 @@ class _AuthGateState extends State<_AuthGate> {
   }
 
   Future<void> _signOut() async {
+    if (_signingOut) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.logout),
+        title: const Text('¿Cerrar sesión?'),
+        content: const Text(
+          'Tendrás que volver a iniciar sesión para usar la aplicación.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Cerrar sesión'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _signingOut = true);
     try {
-      await _pushDevices.unregisterCurrentDevice();
-    } catch (error) {
-      debugPrint(
-        'FCM: no se pudo desactivar el dispositivo al cerrar sesión: $error',
-      );
+      try {
+        await _pushDevices.unregisterCurrentDevice();
+      } catch (error) {
+        debugPrint(
+          'FCM: no se pudo desactivar el dispositivo al cerrar sesión: $error',
+        );
+      }
+      await _auth.signOut();
+    } finally {
+      if (mounted) setState(() => _signingOut = false);
     }
-    await _auth.signOut();
   }
 
   void _schedulePushRegistration(String userId) {
@@ -148,7 +214,12 @@ class _AuthGateState extends State<_AuthGate> {
           );
         }
         _schedulePushRegistration(session.user.id);
-        return PersonalWorkspaceScreen(profile: profile, onSignOut: _signOut);
+        return PersonalWorkspaceScreen(
+          profile: profile,
+          onSignOut: _signOut,
+          isDarkMode: widget.isDarkMode,
+          onToggleTheme: widget.onToggleTheme,
+        );
       },
     );
   }
@@ -215,7 +286,7 @@ class _MessageScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.shield_outlined, size: 48, color: AppColors.navy),
+            Icon(Icons.shield_outlined, size: 48, color: AppColors.navy),
             const SizedBox(height: 20),
             Text(title, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),

@@ -109,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 38),
-                        const Text(
+                        Text(
                           'PORTAL DEL EQUIPO',
                           style: TextStyle(
                             color: AppColors.muted,
@@ -124,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'Ingresa con el correo y contraseña de tu cuenta.',
                           style: TextStyle(color: AppColors.muted, height: 1.5),
                         ),
@@ -204,7 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         activeColor: AppColors.navy,
                                       ),
                                       const SizedBox(width: 4),
-                                      const Text(
+                                      Text(
                                         'Mantener sesión iniciada',
                                         style: TextStyle(
                                           color: AppColors.ink,
@@ -249,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                               const SizedBox(height: 18),
-                              const Text(
+                              Text(
                                 '¿Olvidaste tu contraseña? Pídele al administrador que te asigne una temporal.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
@@ -262,7 +262,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 26),
-                        const Row(
+                        Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
@@ -281,11 +281,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                         const SizedBox(height: 28),
-                        const Text(
+                        Text(
                           '¿Necesitas acceso? Pídele una cuenta al administrador.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Color(0xFF98A29D),
+                            color: AppColors.muted,
                             fontSize: 12,
                           ),
                         ),
@@ -310,8 +310,8 @@ class _FieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
-    style: const TextStyle(
-      color: Color(0xFF49534E),
+    style: TextStyle(
+      color: AppColors.ink,
       fontSize: 13,
       fontWeight: FontWeight.w600,
     ),
