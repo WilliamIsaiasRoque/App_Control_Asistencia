@@ -253,7 +253,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
           ),
           title: const Text('Marca registrada'),
           content: Text(
-            '${result.event == 'check_out' ? 'Salida' : 'Entrada'} · ${_time(markedTime)}${result.siteName == null ? '' : '\nSede: ${result.siteName}'}',
+            '${result.event == 'check_out' ? 'Salida' : 'Entrada'} · ${_time(markedTime)}',
           ),
           actions: [
             FilledButton(

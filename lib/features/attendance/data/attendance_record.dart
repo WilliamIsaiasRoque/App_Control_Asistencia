@@ -36,6 +36,7 @@ class AttendanceMarkResult {
   const AttendanceMarkResult({
     required this.ok,
     this.error,
+    this.reason,
     this.event,
     this.siteName,
     this.record,
@@ -47,6 +48,7 @@ class AttendanceMarkResult {
 
   final bool ok;
   final String? error;
+  final String? reason;
   final String? event;
   final String? siteName;
   final AttendanceRecord? record;
@@ -60,6 +62,7 @@ class AttendanceMarkResult {
     return AttendanceMarkResult(
       ok: json['ok'] as bool? ?? false,
       error: json['error'] as String?,
+      reason: json['reason'] as String?,
       event: json['event'] as String?,
       siteName: json['site_name'] as String?,
       record: rawRecord is Map
@@ -73,18 +76,14 @@ class AttendanceMarkResult {
   }
 
   String get diagnosticMessage {
-    final details = <String>[];
-    if (siteName != null) details.add('Sede: $siteName');
-    if (distanceM != null) {
-      details.add('Distancia: ${distanceM!.toStringAsFixed(1)} m');
+    switch (reason) {
+      case 'outside_radius':
+      case 'low_accuracy_and_outside_radius':
+        return 'La ubicación detectada está fuera del radio permitido de tus locales autorizados.';
+      case 'low_accuracy':
+        return 'La ubicación llegó con poca precisión. Activa la ubicación precisa e inténtalo otra vez.';
+      default:
+        return error ?? 'No se pudo validar tu ubicación.';
     }
-    if (accuracyM != null) {
-      details.add('Precisión GPS: ${accuracyM!.toStringAsFixed(1)} m');
-    }
-    if (radiusM != null) details.add('Radio: ${radiusM!.toStringAsFixed(0)} m');
-    if (maxAccuracyM != null) {
-      details.add('Precisión máxima: ${maxAccuracyM!.toStringAsFixed(0)} m');
-    }
-    return [error ?? 'No se pudo validar la ubicación.', ...details].join('\n');
   }
 }
