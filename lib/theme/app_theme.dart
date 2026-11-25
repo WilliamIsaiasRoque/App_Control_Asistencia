@@ -12,11 +12,11 @@ abstract final class AppColors {
   static Color get navyDark =>
       darkMode ? const Color(0xFFD7E4F8) : const Color(0xFF14294B);
   static Color get page =>
-      darkMode ? const Color(0xFF111827) : const Color(0xFFF4F6FA);
+      darkMode ? const Color(0xFF192A3E) : const Color(0xFFF4F6FA);
   static Color get line =>
-      darkMode ? const Color(0xFF344155) : const Color(0xFFE4E8EF);
+      darkMode ? const Color(0xFF405775) : const Color(0xFFE4E8EF);
   static Color get paper =>
-      darkMode ? const Color(0xFF1B2535) : const Color(0xFFFFFFFF);
+      darkMode ? const Color(0xFF263B54) : const Color(0xFFFFFFFF);
 }
 
 abstract final class AppTheme {
@@ -28,9 +28,9 @@ abstract final class AppTheme {
     final ink = dark ? const Color(0xFFE7ECF4) : const Color(0xFF172235);
     final muted = dark ? const Color(0xFFA0AEC0) : const Color(0xFF76817D);
     final primary = dark ? const Color(0xFF91B5F0) : const Color(0xFF203D6B);
-    final page = dark ? const Color(0xFF111827) : const Color(0xFFF4F6FA);
-    final line = dark ? const Color(0xFF344155) : const Color(0xFFE4E8EF);
-    final paper = dark ? const Color(0xFF1B2535) : const Color(0xFFFFFFFF);
+    final page = dark ? const Color(0xFF192A3E) : const Color(0xFFF4F6FA);
+    final line = dark ? const Color(0xFF405775) : const Color(0xFFE4E8EF);
+    final paper = dark ? const Color(0xFF263B54) : const Color(0xFFFFFFFF);
     final colorScheme =
         ColorScheme.fromSeed(
           seedColor: primary,

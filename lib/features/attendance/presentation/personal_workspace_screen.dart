@@ -1196,6 +1196,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
     final dateLabel = _capitalize(
       DateFormat('EEEE d MMM', 'es_PE').format(date),
     );
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final tint = complete ? const Color(0xFFDCEDE5) : const Color(0xFFF2E4C8);
     final bg = complete ? const Color(0xFFF6FAF8) : const Color(0xFFFFFAF1);
     return Container(
@@ -1215,8 +1216,11 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
                 child: Text(
                   dateLabel,
                   style: TextStyle(
-                    color: AppColors.navyDark,
-                    fontWeight: FontWeight.w700,
+                    color: isDark
+                        ? const Color(0xFF14294B)
+                        : AppColors.navyDark,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
@@ -1226,7 +1230,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
                   color: complete
                       ? const Color(0xFF29976D)
                       : const Color(0xFFB77718),
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -1325,39 +1329,86 @@ class _SummaryCard extends StatelessWidget {
   final String subtitle;
   final bool wide;
   @override
-  Widget build(BuildContext context) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: AppColors.muted,
-              fontSize: 9,
-              letterSpacing: 1,
-              fontWeight: FontWeight.w700,
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final normalizedLabel = label.toUpperCase();
+    final accent = normalizedLabel.contains('HORA')
+        ? const Color(0xFF8B72C6)
+        : normalizedLabel.contains('JORNADA') ||
+              normalizedLabel.contains('PRESENT')
+        ? const Color(0xFF3C9276)
+        : normalizedLabel.contains('TRABAJ')
+        ? const Color(0xFF27859A)
+        : const Color(0xFF3B6FA8);
+    final icon = normalizedLabel.contains('HORA')
+        ? Icons.schedule_outlined
+        : normalizedLabel.contains('JORNADA')
+        ? Icons.task_alt_outlined
+        : normalizedLabel.contains('PRESENT')
+        ? Icons.groups_outlined
+        : normalizedLabel.contains('TRABAJ')
+        ? Icons.people_alt_outlined
+        : Icons.calendar_month_outlined;
+
+    return Card(
+      color: isDark ? const Color(0xFF2D4969) : const Color(0xFFF0F5FD),
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: isDark ? const Color(0xFFD6E4F6) : accent,
+                      fontSize: 9,
+                      letterSpacing: 1,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: isDark ? .24 : .12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: accent, size: 16),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              color: AppColors.navyDark,
-              fontSize: wide ? 23 : 25,
-              fontWeight: FontWeight.w800,
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                color: isDark ? Colors.white : const Color(0xFF14294B),
+                fontSize: wide ? 23 : 25,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            subtitle,
-            style: TextStyle(color: AppColors.muted, fontSize: 10),
-          ),
-        ],
+            const SizedBox(height: 3),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: isDark
+                    ? const Color(0xFFCFDCEE)
+                    : const Color(0xFF687B94),
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _HistoryTime extends StatelessWidget {
@@ -1365,28 +1416,32 @@ class _HistoryTime extends StatelessWidget {
   final String label;
   final String value;
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        label,
-        style: TextStyle(
-          color: AppColors.muted,
-          fontSize: 9,
-          letterSpacing: .6,
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: isDark ? const Color(0xFF657184) : AppColors.muted,
+            fontSize: 10,
+            letterSpacing: .6,
+            fontWeight: FontWeight.w600,
+          ),
         ),
-      ),
-      const SizedBox(height: 4),
-      Text(
-        value,
-        style: TextStyle(
-          color: AppColors.ink,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            color: isDark ? const Color(0xFF172235) : AppColors.ink,
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+          ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
+  }
 }
 
 class _ErrorCard extends StatelessWidget {
