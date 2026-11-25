@@ -29,6 +29,7 @@ class AdminAttendanceCorrectionScreenState
   bool _loading = true;
   bool _recordLoading = false;
   bool _saving = false;
+  bool _formEdited = false;
   String? _error;
   String? _notice;
 
@@ -96,6 +97,7 @@ class AdminAttendanceCorrectionScreenState
       setState(() {
         _inTime = _fromTimestamp(record?.checkInAt);
         _outTime = _fromTimestamp(record?.checkOutAt);
+        _formEdited = false;
       });
     } catch (_) {
       if (mounted) setState(() => _error = 'No se pudo leer esa asistencia.');
@@ -161,6 +163,44 @@ class AdminAttendanceCorrectionScreenState
         _outTime = selected;
       }
       _error = null;
+      _formEdited = true;
+    });
+  }
+
+  Future<void> _clearTime(bool isEntry) async {
+    final current = isEntry ? _inTime : _outTime;
+    if (current == null || !mounted) return;
+    final label = isEntry ? 'entrada' : 'salida';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('¿Quitar la hora de $label?'),
+        content: Text(
+          'Se quitará del formulario. El registro no cambiará hasta que pulses '
+          '“Guardar corrección”.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Quitar hora'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() {
+      if (isEntry) {
+        _inTime = null;
+      } else {
+        _outTime = null;
+      }
+      _formEdited = true;
+      _error = null;
+      _notice = null;
     });
   }
 
@@ -250,6 +290,8 @@ class AdminAttendanceCorrectionScreenState
         const SizedBox(height: 16),
         if (_error != null) _CorrectionMessage(_error!, error: true),
         if (_notice != null) _CorrectionMessage(_notice!, error: false),
+        if (_formEdited)
+          const _PendingChangesMessage(),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -301,9 +343,9 @@ class AdminAttendanceCorrectionScreenState
                   onPick: _saving || _recordLoading
                       ? null
                       : () => _pickTime(true),
-                  onClear: _saving || _recordLoading
+                  onClear: _saving || _recordLoading || _inTime == null
                       ? null
-                      : () => setState(() => _inTime = null),
+                      : () => _clearTime(true),
                 ),
                 _TimePickerRow(
                   label: 'Salida',
@@ -311,9 +353,9 @@ class AdminAttendanceCorrectionScreenState
                   onPick: _saving || _recordLoading
                       ? null
                       : () => _pickTime(false),
-                  onClear: _saving || _recordLoading
+                  onClear: _saving || _recordLoading || _outTime == null
                       ? null
-                      : () => setState(() => _outTime = null),
+                      : () => _clearTime(false),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -327,6 +369,12 @@ class AdminAttendanceCorrectionScreenState
                     hintText: 'Ej.: marcó tarde por una emergencia',
                   ),
                 ),
+                if (_formEdited)
+                  TextButton.icon(
+                    onPressed: _saving || _recordLoading ? null : _loadRecord,
+                    icon: const Icon(Icons.undo),
+                    label: const Text('Descartar cambios'),
+                  ),
                 FilledButton.icon(
                   onPressed:
                       _saving || _loading || _recordLoading || _workerId == null
@@ -455,6 +503,26 @@ class _CorrectionMessage extends StatelessWidget {
         color: error ? const Color(0xFFA3443A) : const Color(0xFF237554),
         fontSize: 12,
       ),
+    ),
+  );
+}
+
+class _PendingChangesMessage extends StatelessWidget {
+  const _PendingChangesMessage();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.all(13),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFF6E5),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: const Color(0xFFF2D7A6)),
+    ),
+    child: const Text(
+      'Hay cambios sin guardar. Las horas solo cambiarán en el registro '
+      'cuando pulses “Guardar corrección”.',
+      style: TextStyle(color: Color(0xFF855A14), fontSize: 12),
     ),
   );
 }
