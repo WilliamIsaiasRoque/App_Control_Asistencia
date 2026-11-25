@@ -182,11 +182,11 @@ class AdminAttendanceCorrectionScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text('Cancelar'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Quitar hora'),
+            child: Text('Quitar hora'),
           ),
         ],
       ),
@@ -267,7 +267,7 @@ class AdminAttendanceCorrectionScreenState
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
       children: [
-        const Text(
+        Text(
           'ADMINISTRACIÓN',
           style: TextStyle(
             color: AppColors.muted,
@@ -283,7 +283,7 @@ class AdminAttendanceCorrectionScreenState
               ?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Ajusta una marca, indica el motivo y deja el cambio auditado.',
           style: TextStyle(color: AppColors.muted),
         ),
@@ -372,7 +372,7 @@ class AdminAttendanceCorrectionScreenState
                   TextButton.icon(
                     onPressed: _saving || _recordLoading ? null : _loadRecord,
                     icon: const Icon(Icons.undo),
-                    label: const Text('Descartar cambios'),
+                    label: Text('Descartar cambios'),
                   ),
                 FilledButton.icon(
                   onPressed:
@@ -388,7 +388,7 @@ class AdminAttendanceCorrectionScreenState
                   label: Text(_saving ? 'Guardando…' : 'Guardar corrección'),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Hora de Perú (UTC−5). Deja ambas horas vacías para limpiar las marcas.',
                   style: TextStyle(color: AppColors.muted, fontSize: 11),
                 ),
@@ -404,7 +404,7 @@ class AdminAttendanceCorrectionScreenState
         ),
         if (_loading) const LinearProgressIndicator(minHeight: 2),
         if (!_loading && _adjustments.isEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 18),
             child: Text(
               'Aún no hay correcciones registradas.',
@@ -420,7 +420,7 @@ class AdminAttendanceCorrectionScreenState
                 children: [
                   Text(
                     '${item.workerName} · ${DateFormat('dd/MM/yyyy', 'es_PE').format(DateTime.parse('${item.workDate}T12:00:00'))}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.navyDark,
                       fontWeight: FontWeight.w800,
                     ),
@@ -515,7 +515,7 @@ class _PendingChangesMessage extends StatelessWidget {
       borderRadius: BorderRadius.circular(10),
       border: Border.all(color: const Color(0xFFF2D7A6)),
     ),
-    child: const Text(
+    child: Text(
       'Hay cambios sin guardar. Las horas solo cambiarán en el registro '
       'cuando pulses “Guardar corrección”.',
       style: TextStyle(color: Color(0xFF855A14), fontSize: 12),

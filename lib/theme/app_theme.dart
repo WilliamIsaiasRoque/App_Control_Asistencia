@@ -50,7 +50,7 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: page,
       cardColor: paper,
       dividerColor: line,
-      dialogBackgroundColor: paper,
+      dialogTheme: DialogThemeData(backgroundColor: paper),
       appBarTheme: AppBarTheme(
         backgroundColor: paper,
         foregroundColor: ink,

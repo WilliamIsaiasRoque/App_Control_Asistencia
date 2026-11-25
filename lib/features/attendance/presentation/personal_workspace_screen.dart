@@ -214,17 +214,17 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
       builder: (dialogContext) => AlertDialog(
         icon: Icon(Icons.location_on_outlined, color: AppColors.navy),
         title: Text('Registrar $eventName'),
-        content: const Text(
+        content: Text(
           'Se consultará tu ubicación una vez para validar la marca. La app no rastrea tu ubicación en segundo plano.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancelar'),
+            child: Text('Cancelar'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Validar y marcar'),
+            child: Text('Validar y marcar'),
           ),
         ],
       ),
@@ -255,14 +255,14 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
             color: Color(0xFF29976D),
             size: 42,
           ),
-          title: const Text('Marca registrada'),
+          title: Text('Marca registrada'),
           content: Text(
             '${result.event == 'check_out' ? 'Salida' : 'Entrada'} · ${_time(markedTime)}',
           ),
           actions: [
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Aceptar'),
+              child: Text('Aceptar'),
             ),
           ],
         ),
@@ -383,7 +383,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
     }
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'DK PARTNERS',
           style: TextStyle(
             fontSize: 14,
@@ -499,7 +499,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
       children: [
         Text(
           admin ? 'REGISTRO PERSONAL · ADMINISTRACIÓN' : 'MI ASISTENCIA',
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.muted,
             fontSize: 10,
             letterSpacing: 2,
@@ -526,7 +526,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
               children: [
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'ESTADO DE HOY',
                         style: TextStyle(
@@ -558,7 +558,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
                   ],
                 ),
                 const SizedBox(height: 18),
-                const Text(
+                Text(
                   'TIEMPO TRABAJADO',
                   style: TextStyle(
                     color: AppColors.muted,
@@ -620,7 +620,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'La ubicación se consulta solo al marcar. No se rastrea en segundo plano.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -641,7 +641,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
               child: FilledButton.icon(
                 onPressed: _openAttendanceSheet,
                 icon: const Icon(Icons.table_chart_outlined),
-                label: const Text('Abrir Excel de asistencia'),
+                label: Text('Abrir Excel de asistencia'),
                 style: FilledButton.styleFrom(
                   minimumSize: const Size.fromHeight(52),
                 ),
@@ -650,7 +650,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
           ),
         ],
         if (_loading)
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(top: 16),
             child: LinearProgressIndicator(minHeight: 2),
           ),
@@ -670,7 +670,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
       children: [
-        const Text(
+        Text(
           'ADMINISTRACIÓN',
           style: TextStyle(
             color: AppColors.muted,
@@ -743,7 +743,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
                 ),
                 if (_teamLoading) const LinearProgressIndicator(minHeight: 2),
                 if (!_teamLoading && _team.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(vertical: 28),
                     child: Text(
                       'No hay trabajadores activos para mostrar.',
@@ -753,7 +753,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
                   ),
                 ..._team.map(_teamMemberCard),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'Tu asistencia como administrador se consulta en “Mi asistencia”.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppColors.muted, fontSize: 11),
@@ -800,7 +800,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
                   member.profile.fullName.isEmpty
                       ? '?'
                       : member.profile.fullName[0].toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.navy,
                     fontWeight: FontWeight.w700,
                   ),
@@ -810,7 +810,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
               Expanded(
                 child: Text(
                   member.profile.fullName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.navyDark,
                     fontWeight: FontWeight.w700,
                   ),
@@ -889,7 +889,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
       children: [
-        const Text(
+        Text(
           'ADMINISTRACIÓN · EQUIPO',
           style: TextStyle(
             color: AppColors.muted,
@@ -905,7 +905,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
               ?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Consulta las marcas por trabajador y mes.',
           style: TextStyle(color: AppColors.muted),
         ),
@@ -924,7 +924,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
                 child: Text(
                   monthLabel,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.navyDark,
                     fontWeight: FontWeight.w800,
                     fontSize: 16,
@@ -994,12 +994,12 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
         const SizedBox(height: 14),
         if (_teamHistoryError != null) _ErrorCard(message: _teamHistoryError!),
         if (_teamHistoryLoading)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 20),
             child: LinearProgressIndicator(minHeight: 2),
           ),
         if (!_teamHistoryLoading && _teamHistory.isEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 28),
             child: Text(
               'No se encontraron trabajadores.',
@@ -1008,7 +1008,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
             ),
           )
         else if (!_teamHistoryLoading && records.isEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 28),
             child: Text(
               'No hay asistencias registradas para este trabajador y mes.',
@@ -1026,7 +1026,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
                     Expanded(
                       child: Text(
                         entry.key.profile.fullName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.navyDark,
                           fontWeight: FontWeight.w800,
                           fontSize: 15,
@@ -1035,10 +1035,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
                     ),
                     Text(
                       '${entry.value.length} ${entry.value.length == 1 ? 'día' : 'días'}',
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 11,
-                      ),
+                      style: TextStyle(color: AppColors.muted, fontSize: 11),
                     ),
                   ],
                 ),
@@ -1047,7 +1044,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
             ],
           ),
         const Divider(height: 28),
-        const Text(
+        Text(
           'Horario mostrado en hora de Perú.',
           textAlign: TextAlign.center,
           style: TextStyle(color: AppColors.muted, fontSize: 10),
@@ -1075,7 +1072,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
       children: [
-        const Text(
+        Text(
           'MI REGISTRO DE HORAS',
           style: TextStyle(
             color: AppColors.muted,
@@ -1154,12 +1151,12 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
                   _ErrorCard(message: _error!),
                 ],
                 if (_loading)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(28),
                     child: CircularProgressIndicator(),
                   )
                 else if (marked.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(vertical: 32, horizontal: 12),
                     child: Column(
                       children: [
@@ -1180,7 +1177,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
                 else
                   ...marked.map(_historyCard),
                 const Divider(height: 22),
-                const Text(
+                Text(
                   'Horario mostrado en hora de Perú · Solo tú puedes ver este registro.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppColors.muted, fontSize: 10),
@@ -1217,7 +1214,7 @@ class _PersonalWorkspaceScreenState extends State<PersonalWorkspaceScreen> {
               Expanded(
                 child: Text(
                   dateLabel,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.navyDark,
                     fontWeight: FontWeight.w700,
                   ),
@@ -1300,7 +1297,7 @@ class _TimeRow extends StatelessWidget {
       Expanded(
         child: Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.muted,
             fontSize: 11,
             letterSpacing: 1,
@@ -1310,10 +1307,7 @@ class _TimeRow extends StatelessWidget {
       ),
       Text(
         value,
-        style: const TextStyle(
-          color: AppColors.ink,
-          fontWeight: FontWeight.w700,
-        ),
+        style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.w700),
       ),
     ],
   );
@@ -1339,7 +1333,7 @@ class _SummaryCard extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.muted,
               fontSize: 9,
               letterSpacing: 1,
@@ -1376,7 +1370,7 @@ class _HistoryTime extends StatelessWidget {
     children: [
       Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.muted,
           fontSize: 9,
           letterSpacing: .6,
@@ -1385,7 +1379,7 @@ class _HistoryTime extends StatelessWidget {
       const SizedBox(height: 4),
       Text(
         value,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.ink,
           fontSize: 11,
           fontWeight: FontWeight.w700,
@@ -1409,11 +1403,7 @@ class _ErrorCard extends StatelessWidget {
     ),
     child: Text(
       message,
-      style: const TextStyle(
-        color: Color(0xFFA3443A),
-        fontSize: 12,
-        height: 1.45,
-      ),
+      style: TextStyle(color: Color(0xFFA3443A), fontSize: 12, height: 1.45),
     ),
   );
 }

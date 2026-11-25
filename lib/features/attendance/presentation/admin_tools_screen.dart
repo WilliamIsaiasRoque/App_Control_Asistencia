@@ -327,7 +327,7 @@ class AdminLocationManagementScreenState
           ),
         ],
       ),
-      const Text(
+      Text(
         'Cada trabajador puede marcar desde cualquiera de sus sedes asignadas, dentro del radio y la precisión configurados.',
         style: TextStyle(color: AppColors.muted, fontSize: 12),
       ),
@@ -343,7 +343,7 @@ class AdminLocationManagementScreenState
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Ubicaciones visibles',
                       style: TextStyle(fontWeight: FontWeight.w800),
@@ -354,12 +354,12 @@ class AdminLocationManagementScreenState
                         ? null
                         : () => _selectSite(null),
                     icon: const Icon(Icons.add_location_alt_outlined),
-                    label: const Text('Agregar'),
+                    label: Text('Agregar'),
                   ),
                 ],
               ),
               if (!_loading && _sites.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Text(
                     'No hay sedes visibles configuradas.',
@@ -380,7 +380,7 @@ class AdminLocationManagementScreenState
                     ),
                     title: Text(
                       site.name,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                      style: TextStyle(fontWeight: FontWeight.w700),
                     ),
                     subtitle: Text(
                       '${site.isActive ? 'Activa' : 'Inactiva'} · radio ${site.radiusM} m · precisión ${site.maxAccuracyM} m · $assigned personas',
@@ -421,7 +421,7 @@ class AdminLocationManagementScreenState
               OutlinedButton.icon(
                 onPressed: _busy || _loading ? null : _captureLocation,
                 icon: const Icon(Icons.my_location),
-                label: const Text('Capturar ubicación actual'),
+                label: Text('Capturar ubicación actual'),
               ),
               const SizedBox(height: 8),
               Row(
@@ -478,13 +478,13 @@ class AdminLocationManagementScreenState
                 ],
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Trabajadores autorizados',
                 style: TextStyle(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 4),
               if (_workers.isEmpty)
-                const Text(
+                Text(
                   'No hay trabajadores activos.',
                   style: TextStyle(color: AppColors.muted),
                 ),
@@ -508,7 +508,7 @@ class AdminLocationManagementScreenState
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 value: _active,
-                title: const Text('Punto activo para marcar'),
+                title: Text('Punto activo para marcar'),
                 onChanged: _busy || _loading
                     ? null
                     : (value) => setState(() => _active = value),
@@ -524,7 +524,7 @@ class AdminLocationManagementScreenState
                 label: Text(_busy ? 'Guardando…' : 'Guardar punto y permisos'),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'La ubicación se consulta solo al marcar. Radio y precisión son filtros distintos.',
                 style: TextStyle(color: AppColors.muted, fontSize: 11),
               ),
@@ -696,7 +696,7 @@ class AdminSheetsSyncScreenState extends State<AdminSheetsSyncScreen> {
             ),
           ],
         ),
-        const Text(
+        Text(
           'Supabase guarda primero las marcas. La cola vuelve a intentar los pendientes automáticamente.',
           style: TextStyle(color: AppColors.muted, fontSize: 12),
         ),
@@ -744,7 +744,7 @@ class AdminSheetsSyncScreenState extends State<AdminSheetsSyncScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'La solicitud vuelve a poner en cola las asistencias del rango elegido; el envío ocurre en segundo plano.',
                   style: TextStyle(color: AppColors.muted, fontSize: 11),
                 ),
@@ -761,7 +761,7 @@ class AdminSheetsSyncScreenState extends State<AdminSheetsSyncScreen> {
               children: [
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Últimos eventos',
                         style: TextStyle(fontWeight: FontWeight.w800),
@@ -772,7 +772,7 @@ class AdminSheetsSyncScreenState extends State<AdminSheetsSyncScreen> {
                 ),
                 if (_loading) const LinearProgressIndicator(minHeight: 2),
                 if (!_loading && _logs.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     child: Text(
                       'Todavía no hay registros en la cola.',
@@ -806,7 +806,7 @@ class AdminSheetsSyncScreenState extends State<AdminSheetsSyncScreen> {
                     ),
                     title: Text(
                       title,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                      style: TextStyle(fontWeight: FontWeight.w700),
                     ),
                     subtitle: Text(
                       '${_status(log.status)} · $subtitle',
@@ -815,10 +815,7 @@ class AdminSheetsSyncScreenState extends State<AdminSheetsSyncScreen> {
                     ),
                     trailing: Text(
                       stamp,
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 10,
-                      ),
+                      style: TextStyle(color: AppColors.muted, fontSize: 10),
                     ),
                   );
                 }),
@@ -847,7 +844,7 @@ class _DateChoice extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 10)),
+        Text(title, style: TextStyle(fontSize: 10)),
         const SizedBox(height: 4),
         Text(DateFormat('dd/MM/yyyy', 'es_PE').format(value)),
       ],
